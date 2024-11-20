@@ -27,9 +27,7 @@ import okhttp3.OkHttpClient;;
 public class MainActivity extends AppCompatActivity {
 
     ComponentManager componentManager = new ComponentManager();
-    OkHttpClient httpClient = new OkHttpClient.Builder()
-            .cookieJar(new Cookies(getApplicationContext()))
-            .build();
+    OkHttpClient httpClient;
 
 
     @Override
@@ -42,7 +40,15 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        httpClient = new OkHttpClient.Builder().cookieJar(new Cookies(getApplicationContext())).build();
         loginHandler();
+    }
+
+    private void appendComponentsToHandler() {
+        componentManager.addComponent("login", findViewById(R.id.oAuthContainer));
+        componentManager.addComponent("init", findViewById(R.id.titleText));
+        componentManager.addComponent("init", findViewById(R.id.loginButton));
+
     }
 
     private void loginHandler() {
@@ -51,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
         Button loginButton = findViewById(R.id.loginButton);
         loginButton.setOnClickListener(view -> {
             componentManager.switchView("login");
-            String oauthUrl = "https://activeboost.na-stewart.com/api/v1/security/login";
             WebView webView = findViewById(R.id.oAuthWebView);
             webView.clearCache(true);
             webView.getSettings().setJavaScriptEnabled(true);
@@ -63,11 +68,15 @@ public class MainActivity extends AppCompatActivity {
                     HttpUrl httpUrl = HttpUrl.parse(url);
                     Cookie okHttpCookie = Cookie.parse(httpUrl, CookieManager.getInstance().getCookie(url).trim());
                     httpClient.cookieJar().saveFromResponse(httpUrl, List.of(okHttpCookie));
+                    componentManager.switchView("init");
                 }
                 }
             });
-            webView.loadUrl(oauthUrl);
+            webView.loadUrl("https://activeboost.na-stewart.com/api/v1/security/login");
         });
+    }
+
+    private void populateFitbit() {
 
     }
 }
