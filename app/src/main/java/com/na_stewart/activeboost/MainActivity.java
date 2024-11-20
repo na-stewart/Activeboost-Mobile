@@ -15,14 +15,21 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 
+import com.na_stewart.activeboost.api.Cookies;
 import com.na_stewart.activeboost.ui.ComponentManager;
 
+import java.util.List;
+
+import okhttp3.Cookie;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;;
 
 public class MainActivity extends AppCompatActivity {
 
     ComponentManager componentManager = new ComponentManager();
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient httpClient = new OkHttpClient.Builder()
+            .cookieJar(new Cookies(getApplicationContext()))
+            .build();
 
 
     @Override
@@ -51,17 +58,14 @@ public class MainActivity extends AppCompatActivity {
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
-                    // Once the page finishes loading, you can extract the cookies
-                    CookieManager cookieManager = CookieManager.getInstance();
-                    String cookies = cookieManager.getCookie(url);
-                    Log.d("Login Cookies", "Cookies: " + cookies);
-                    componentManager.addComponent("login", loginLayout);
-                    // Get request and add cookie to okhttp cookie jar
+                super.onPageFinished(view, url);
+                if (url.contains("/callback")) {
+                    HttpUrl httpUrl = HttpUrl.parse(url);
+                    Cookie okHttpCookie = Cookie.parse(httpUrl, CookieManager.getInstance().getCookie(url).trim());
+                    httpClient.cookieJar().saveFromResponse(httpUrl, List.of(okHttpCookie));
+                }
                 }
             });
-
-            // Load the OAuth URL in the WebView
             webView.loadUrl(oauthUrl);
         });
 
