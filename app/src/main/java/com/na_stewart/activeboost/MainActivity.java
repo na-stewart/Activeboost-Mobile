@@ -77,11 +77,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void login(View view) {
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.removeAllCookies(null);
         componentManager.switchView("login");
         WebView webView = findViewById(R.id.oAuthWebView);
+        CookieManager cookieManager = CookieManager.getInstance();
         webView.clearCache(true);
+        cookieManager.removeAllCookies(null);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
             @Override
