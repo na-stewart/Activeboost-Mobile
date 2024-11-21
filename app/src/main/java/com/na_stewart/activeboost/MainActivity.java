@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
             Call call = httpClient.newCall(request);
             try (Response response = call.execute()) {
                 if (response.code() == 200)
-                    httpClient.cookieJar().saveFromResponse(HttpUrl.parse(urlStr), null);
+                    sharedPreferences.edit().remove("Cookies").apply();
             } catch (IOException e) {
                 e.printStackTrace(); // Handle exception as needed
             }
