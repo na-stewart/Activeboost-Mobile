@@ -1,7 +1,10 @@
 package com.na_stewart.activeboost;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -18,16 +21,24 @@ import androidx.core.view.WindowInsetsCompat;
 import com.na_stewart.activeboost.api.Cookies;
 import com.na_stewart.activeboost.ui.ComponentManager;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import okhttp3.Call;
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;;
 
 public class MainActivity extends AppCompatActivity {
 
-    ComponentManager componentManager = new ComponentManager();
-    OkHttpClient httpClient;
+    private final ComponentManager componentManager = new ComponentManager();
+    private final String BASE_URL = "https://activeboost.na-stewart.com/api/v1/";
+    private OkHttpClient httpClient;
+    private SharedPreferences sharedPreferences;
 
 
     @Override
@@ -40,43 +51,48 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        httpClient = new OkHttpClient.Builder().cookieJar(new Cookies(getApplicationContext())).build();
-        loginHandler();
+        sharedPreferences = getApplicationContext().getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE);
+        httpClient = new OkHttpClient.Builder().cookieJar(new Cookies(sharedPreferences)).build();
+        addContainersToManager();
     }
 
-    private void appendComponentsToHandler() {
+    private void addContainersToManager() {
+        componentManager.addComponent("init", findViewById(R.id.initContainer));
         componentManager.addComponent("login", findViewById(R.id.oAuthContainer));
-        componentManager.addComponent("init", findViewById(R.id.titleText));
-        componentManager.addComponent("init", findViewById(R.id.loginButton));
-
     }
 
-    private void loginHandler() {
-        LinearLayout loginLayout = findViewById(R.id.oAuthContainer);
-        componentManager.addComponent("login", loginLayout);
-        Button loginButton = findViewById(R.id.loginButton);
-        loginButton.setOnClickListener(view -> {
-            componentManager.switchView("login");
-            WebView webView = findViewById(R.id.oAuthWebView);
-            webView.clearCache(true);
-            webView.getSettings().setJavaScriptEnabled(true);
-            webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                if (url.contains("/callback")) {
-                    HttpUrl httpUrl = HttpUrl.parse(url);
-                    Cookie okHttpCookie = Cookie.parse(httpUrl, CookieManager.getInstance().getCookie(url).trim());
-                    httpClient.cookieJar().saveFromResponse(httpUrl, List.of(okHttpCookie));
-                    componentManager.switchView("init");
-                }
-                }
-            });
-            webView.loadUrl("https://activeboost.na-stewart.com/api/v1/security/login");
+    public void logout(View view) {
+        String urlStr = "https://activeboost.na-stewart.com/api/v1/security/logout";
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            Request request = new Request.Builder().url(urlStr).build();
+            Call call = httpClient.newCall(request);
+            try (Response response = call.execute()) {
+                if (response.code() == 200)
+                    httpClient.cookieJar().saveFromResponse(HttpUrl.parse(urlStr), null);
+            } catch (IOException e) {
+                e.printStackTrace(); // Handle exception as needed
+            }
         });
     }
 
-    private void populateFitbit() {
-
+    public void login(View view) {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.removeAllCookies(null);
+        componentManager.switchView("login");
+        WebView webView = findViewById(R.id.oAuthWebView);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (url.contains("/callback")) {
+                    HttpUrl httpUrl = HttpUrl.parse(url);
+                    httpClient.cookieJar().saveFromResponse(httpUrl,
+                            List.of(Cookie.parse(httpUrl, cookieManager.getCookie(url).trim())));
+                    componentManager.switchView("init");
+                }
+            }
+        });
+        webView.loadUrl("https://activeboost.na-stewart.com/api/v1/security/login");
     }
 }
