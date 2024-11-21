@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logout(View view) {
-        String urlStr = "https://activeboost.na-stewart.com/api/v1/security/logout";
+        String urlStr = BASE_URL + "security/logout";
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             Request request = new Request.Builder().url(urlStr).build();
@@ -95,6 +95,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        webView.loadUrl("https://activeboost.na-stewart.com/api/v1/security/login");
+        webView.loadUrl(BASE_URL + "security/login");
     }
 }
