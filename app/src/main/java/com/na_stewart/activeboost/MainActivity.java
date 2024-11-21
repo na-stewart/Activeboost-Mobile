@@ -81,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
         cookieManager.removeAllCookies(null);
         componentManager.switchView("login");
         WebView webView = findViewById(R.id.oAuthWebView);
+        webView.clearCache(true);
+        webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
