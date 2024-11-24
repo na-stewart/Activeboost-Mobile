@@ -8,8 +8,8 @@ import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,15 +18,23 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 
+
 import com.na_stewart.activeboost.api.Cookies;
 import com.na_stewart.activeboost.ui.ComponentManager;
+import com.na_stewart.activeboost.ui.ViewSwitchEvent;
+
+import org.greenrobot.eventbus.EventBus;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import okhttp3.Call;
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -35,8 +43,8 @@ import okhttp3.Response;;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final ComponentManager componentManager = new ComponentManager();
     private final String BASE_URL = "https://activeboost.na-stewart.com/api/v1/";
+    private final ComponentManager componentManager = new ComponentManager();
     private OkHttpClient httpClient;
     private SharedPreferences sharedPreferences;
 
@@ -54,30 +62,84 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = getApplicationContext().getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE);
         httpClient = new OkHttpClient.Builder().cookieJar(new Cookies(sharedPreferences)).build();
         addContainersToManager();
+        loadTodaysStats(findViewById(R.id.stepsTaken), "steps");
+        loadTodaysStats(findViewById(R.id.caloriesBurned), "calories");
+        loadTodaysStats(findViewById(R.id.timeActive), "minutesFairlyActive");
+        loadRecentActivities();
     }
 
     private void addContainersToManager() {
         componentManager.addComponent("init", findViewById(R.id.initContainer));
         componentManager.addComponent("login", findViewById(R.id.oAuthContainer));
+        componentManager.addComponent("main", findViewById(R.id.todayContainer));
+        componentManager.addComponent("main", findViewById(R.id.logout));
     }
 
-    public void logout(View view) {
-        String urlStr = BASE_URL + "security/logout";
+    public String getToday() {
+        LocalDate currentDate = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        // return currentDate.format(formatter);
+        return "2024-11-23";
+    }
+
+    public void loadRecentActivities() {
+        String urlStr = BASE_URL + "fitbit/recent";
+        LinearLayout recentContainer = findViewById(R.id.recentActivitiesContainers);
+        componentManager.addComponent("main", recentContainer);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
-            Request request = new Request.Builder().url(urlStr).build();
-            Call call = httpClient.newCall(request);
-            try (Response response = call.execute()) {
+            try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
                 if (response.code() == 200)
-                    sharedPreferences.edit().remove("Cookies").apply();
-            } catch (IOException e) {
-                e.printStackTrace(); // Handle exception as needed
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray data = json.getJSONArray("data");
+
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        TextView textView = new TextView(this);
+                        textView.setPadding(0,0,0,20);
+                        textView.setText(String.format("%s - %s mins", item.getString("name"), item.getInt("duration") / 60000));
+                        textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        runOnUiThread(() -> {
+                            recentContainer.addView(textView);
+                        });
+                    }
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
             }
         });
     }
 
+    public void loadTodaysStats(TextView view, String type) {
+        String urlStr = BASE_URL + String.format("fitbit/activity?start=%s&end=%s&type=%s", getToday(), getToday(), type);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    String stepsTaken = json.getJSONObject("data")
+                            .getJSONArray(String.format("activities-%s", type))
+                            .getJSONObject(0)
+                            .getString("value");
+                    view.setText(stepsTaken);
+                }
+                else
+                    EventBus.getDefault().post(new ViewSwitchEvent("init"));
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void logout(View view) {
+        sharedPreferences.edit().remove("Cookies").apply();
+        EventBus.getDefault().post(new ViewSwitchEvent("init"));
+    }
+
     public void login(View view) {
-        componentManager.switchView("login");
+        EventBus.getDefault().post(new ViewSwitchEvent("login"));
         WebView webView = findViewById(R.id.oAuthWebView);
         CookieManager cookieManager = CookieManager.getInstance();
         webView.clearCache(true);
@@ -91,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                     HttpUrl httpUrl = HttpUrl.parse(url);
                     httpClient.cookieJar().saveFromResponse(httpUrl,
                             List.of(Cookie.parse(httpUrl, cookieManager.getCookie(url).trim())));
-                    componentManager.switchView("init");
+                    EventBus.getDefault().post(new ViewSwitchEvent("init"));
                 }
             }
         });
