@@ -4,24 +4,16 @@ import android.util.Pair;
 import android.view.View;
 
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import java.util.ArrayList;
 
 
 public class ComponentManager {
     ArrayList<Pair<String, View>> components = new ArrayList<>();
 
-    public ComponentManager() {
-        EventBus.getDefault().register(this);
-    }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onViewSwitchEvent(ViewSwitchEvent event) {
+    public void onViewSwitchEvent(String view) {
         for (Pair<String, View> component : components) {
-            if (component.first.equals(event.getView()))
+            if (component.first.equals(view))
                 component.second.setVisibility(View.VISIBLE);
             else
                 component.second.setVisibility(View.GONE);

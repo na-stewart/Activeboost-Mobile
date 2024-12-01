@@ -32,7 +32,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.eventbus)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

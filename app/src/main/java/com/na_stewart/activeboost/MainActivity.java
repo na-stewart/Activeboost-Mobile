@@ -3,7 +3,6 @@ package com.na_stewart.activeboost;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
@@ -17,13 +16,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-
-
 import com.na_stewart.activeboost.api.Cookies;
 import com.na_stewart.activeboost.ui.ComponentManager;
-import com.na_stewart.activeboost.ui.ViewSwitchEvent;
 
-import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,10 +57,7 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = getApplicationContext().getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE);
         httpClient = new OkHttpClient.Builder().cookieJar(new Cookies(sharedPreferences)).build();
         addContainersToManager();
-        loadTodaysStats(findViewById(R.id.stepsTaken), "steps");
-        loadTodaysStats(findViewById(R.id.caloriesBurned), "calories");
-        loadTodaysStats(findViewById(R.id.timeActive), "minutesFairlyActive");
-        loadRecentActivities();
+        refresh(null);
     }
 
     private void addContainersToManager() {
@@ -73,36 +65,39 @@ public class MainActivity extends AppCompatActivity {
         componentManager.addComponent("login", findViewById(R.id.oAuthContainer));
         componentManager.addComponent("main", findViewById(R.id.todayContainer));
         componentManager.addComponent("main", findViewById(R.id.logout));
+        componentManager.addComponent("main", findViewById(R.id.refresh));
+        componentManager.addComponent("main", findViewById(R.id.recentActivitiesContainers));
     }
 
     public String getToday() {
         LocalDate currentDate = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        // return currentDate.format(formatter);
-        return "2024-11-23";
+        // return "2024-11-15";
+        return currentDate.format(formatter);
     }
 
     public void loadRecentActivities() {
-        String urlStr = BASE_URL + "fitbit/recent";
+        String urlStr = BASE_URL + String.format("fitbit/activity/list?after=%s", getToday());
         LinearLayout recentContainer = findViewById(R.id.recentActivitiesContainers);
-        componentManager.addComponent("main", recentContainer);
+        recentContainer.removeAllViews();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
                 if (response.code() == 200)
                 {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray("data");
-
+                    JSONArray data = json.getJSONObject("data").getJSONArray("activities");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         TextView textView = new TextView(this);
                         textView.setPadding(0,0,0,20);
-                        textView.setText(String.format("%s - %s mins", item.getString("name"), item.getInt("duration") / 60000));
+                        textView.setText(String.format("%s - %s steps - %s calories - %s heart rate - %s mins",
+                                item.getString("activityName"), item.optInt("steps", 0),
+                                item.getInt("calories"),
+                                item.getInt("averageHeartRate"),
+                                item.getInt("duration") / 60000));
                         textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                        runOnUiThread(() -> {
-                            recentContainer.addView(textView);
-                        });
+                        runOnUiThread(() -> recentContainer.addView(textView));
                     }
                 }
             } catch (IOException | JSONException e) {
@@ -126,20 +121,28 @@ public class MainActivity extends AppCompatActivity {
                     view.setText(stepsTaken);
                 }
                 else
-                    EventBus.getDefault().post(new ViewSwitchEvent("init"));
+                    runOnUiThread(() ->  componentManager.onViewSwitchEvent("init"));
+
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
         });
     }
 
+    public void refresh(View view) {
+       loadTodaysStats(findViewById(R.id.stepsTaken), "steps");
+       loadTodaysStats(findViewById(R.id.caloriesBurned), "calories");
+       loadTodaysStats(findViewById(R.id.timeActive), "minutesFairlyActive");
+       loadRecentActivities();
+    }
+
     public void logout(View view) {
         sharedPreferences.edit().remove("Cookies").apply();
-        EventBus.getDefault().post(new ViewSwitchEvent("init"));
+        componentManager.onViewSwitchEvent("init");
     }
 
     public void login(View view) {
-        EventBus.getDefault().post(new ViewSwitchEvent("login"));
+        componentManager.onViewSwitchEvent("login");
         WebView webView = findViewById(R.id.oAuthWebView);
         CookieManager cookieManager = CookieManager.getInstance();
         webView.clearCache(true);
@@ -153,7 +156,8 @@ public class MainActivity extends AppCompatActivity {
                     HttpUrl httpUrl = HttpUrl.parse(url);
                     httpClient.cookieJar().saveFromResponse(httpUrl,
                             List.of(Cookie.parse(httpUrl, cookieManager.getCookie(url).trim())));
-                    EventBus.getDefault().post(new ViewSwitchEvent("init"));
+                    componentManager.onViewSwitchEvent("main");
+                    refresh(null);
                 }
             }
         });
