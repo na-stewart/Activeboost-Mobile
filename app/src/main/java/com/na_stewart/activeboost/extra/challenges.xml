@@ -1,0 +1,147 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="106dp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="You can't be that kid standing at the top of the waterslide, overthinking it. You have to go down the chute."
+            android:textColor="#000"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="end"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="74°F NewYork"
+                android:textSize="18sp"
+                android:textColor="#000" />
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_sun"
+            android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Title -->
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="77dp"
+            android:layout_marginTop="16dp"
+            android:background="#EAEAEA"
+            android:hint="Title:"
+            android:padding="12dp" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Exercise Type:"
+                android:textSize="16sp"
+                android:textColor="#000" />
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_running"
+            android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Minimum Steps -->
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Minimum Steps:"
+            android:background="#EAEAEA"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- Challenge Duration -->
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Challenge Duration:"
+            android:background="#EAEAEA"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- Group Member Max -->
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Group Member Max:"
+            android:background="#EAEAEA"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- Create Challenge  -->
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="95dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#FF9800"
+            android:text="Create Challenge"
+            android:textColor="#FFF" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="92dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:layout_width="82dp"
+                android:layout_height="80dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_calendar" />
+
+            <ImageButton
+                android:layout_width="82dp"
+                android:layout_height="80dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_add" />
+
+            <ImageButton
+                android:layout_width="82dp"
+                android:layout_height="80dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_home_black_24dp" />
+
+            <ImageButton
+                android:layout_width="82dp"
+                android:layout_height="80dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_dashboard_black_24dp" />
+
+            <ImageButton
+                android:layout_width="82dp"
+                android:layout_height="80dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_my" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

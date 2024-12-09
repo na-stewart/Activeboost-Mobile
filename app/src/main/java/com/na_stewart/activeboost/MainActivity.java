@@ -67,17 +67,11 @@ public class MainActivity extends AppCompatActivity {
         componentManager.addComponent("main", findViewById(R.id.logout));
         componentManager.addComponent("main", findViewById(R.id.refresh));
         componentManager.addComponent("main", findViewById(R.id.recentActivitiesContainers));
-    }
-
-    public String getToday() {
-        LocalDate currentDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        // return "2024-11-15";
-        return currentDate.format(formatter);
+        componentManager.addComponent("main", findViewById(R.id.mainTitle));
     }
 
     public void loadRecentActivities() {
-        String urlStr = BASE_URL + String.format("fitbit/activity/list?after=%s", getToday());
+        String urlStr = BASE_URL + "fitbit/activity/list/weekly";
         LinearLayout recentContainer = findViewById(R.id.recentActivitiesContainers);
         recentContainer.removeAllViews();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -91,9 +85,10 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject item = data.getJSONObject(i);
                         TextView textView = new TextView(this);
                         textView.setPadding(0,0,0,20);
-                        textView.setText(String.format("%s - %s steps - %s calories - %s heart rate - %s mins",
+                        textView.setText(String.format("%s - %s steps - %s calories - %s km distance - %s heart rate - %s mins",
                                 item.getString("activityName"), item.optInt("steps", 0),
                                 item.getInt("calories"),
+                                Math.round(item.getDouble("distance")),
                                 item.getInt("averageHeartRate"),
                                 item.getInt("duration") / 60000));
                         textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
@@ -107,22 +102,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadTodaysStats(TextView view, String type) {
-        String urlStr = BASE_URL + String.format("fitbit/activity?start=%s&end=%s&type=%s", getToday(), getToday(), type);
+        String urlStr = BASE_URL + String.format("fitbit/activity/weekly?type=%s", type);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
                 if (response.code() == 200)
                 {
-                    JSONObject json = new JSONObject(response.body().string());
-                    String stepsTaken = json.getJSONObject("data")
-                            .getJSONArray(String.format("activities-%s", type))
-                            .getJSONObject(0)
-                            .getString("value");
-                    view.setText(stepsTaken);
+                    double total = 0;
+                    JSONArray data = new JSONObject(response.body().string()).getJSONObject("data").getJSONArray(String.format("activities-%s", type));
+                    for (int i = 0; i < data.length(); i++) {
+                        total += data.getJSONObject(i).getDouble("value");
+                    }
+                    view.setText(String.valueOf(Math.round(total)));
                 }
                 else
                     runOnUiThread(() ->  componentManager.onViewSwitchEvent("init"));
-
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -132,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
     public void refresh(View view) {
        loadTodaysStats(findViewById(R.id.stepsTaken), "steps");
        loadTodaysStats(findViewById(R.id.caloriesBurned), "calories");
-       loadTodaysStats(findViewById(R.id.timeActive), "minutesFairlyActive");
+       loadTodaysStats(findViewById(R.id.timeActive), "distance");
        loadRecentActivities();
     }
 
