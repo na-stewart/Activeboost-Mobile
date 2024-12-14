@@ -13,11 +13,20 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        app:layout_constraintDimensionRatio="1:1"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="117dp"
+            android:layout_height="112dp"
+            app:srcCompat="@drawable/fitness" />
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="447dp"
+            android:layout_height="51dp"
             android:gravity="center"
             android:text="ActiveBoost"
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
@@ -29,6 +38,15 @@
             android:layout_height="wrap_content"
             android:onClick="login"
             android:text="Login" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="51dp"
+            android:gravity="center"
+            android:text="Get In Shape, Together."
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textSize="15sp" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -50,128 +68,171 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/todayContainer"
-        android:layout_width="403dp"
-        android:layout_height="49dp"
-        android:layout_marginTop="45dp"
-        android:alpha="1"
-        android:gravity="center"
+        android:id="@+id/nav"
+        android:layout_width="410dp"
+        android:layout_height="41dp"
+        android:layout_marginBottom="5dp"
         android:orientation="horizontal"
         android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:id="@+id/imageView5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/run" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/home" />
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/user" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/profile"
+        android:layout_width="409dp"
+        android:layout_height="683dp"
+        android:layout_marginBottom="2dp"
+        android:orientation="vertical"
+        android:padding="15dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="348dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView3"
-                android:layout_width="114dp"
-                android:layout_height="wrap_content"
-                android:text="Calories Burned"
-                android:textAlignment="center" />
-
-            <TextView
-                android:id="@+id/caloriesBurned"
+                android:id="@+id/textView7"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textAlignment="center" />
+                android:layout_height="80dp"
+                android:text="Profile"
+                android:textAlignment="center"
+                android:textSize="40dp" />
+
         </LinearLayout>
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your Weekly Fitness"
+                    android:textAlignment="center"
+                    android:textSize="20dp" />
+
+            </LinearLayout>
+        </ScrollView>
+
+        <EditText
+            android:id="@+id/username"
+            android:layout_width="386dp"
+            android:layout_height="80dp"
+            android:ems="10"
+            android:inputType="text"
+            android:text="Username" />
+
+        <EditText
+            android:id="@+id/bio"
+            android:layout_width="385dp"
+            android:layout_height="83dp"
+            android:ems="10"
+            android:inputType="text"
+            android:text="Bio" />
+
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="387dp"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_marginLeft="0dp"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:paddingLeft="0dp">
+
+            <Button
+                android:id="@+id/updateProfile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Update Profile" />
 
             <TextView
-                android:id="@+id/textView5"
-                android:layout_width="179dp"
+                android:layout_width="56dp"
                 android:layout_height="wrap_content"
-                android:text="Distance Traveled (km)"
-                android:textAlignment="center" />
+                android:layout_weight="1" />
 
-            <TextView
-                android:id="@+id/timeActive"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/logout"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
-                android:textAlignment="center" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="106dp"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Steps Taken"
-                android:textAlignment="center" />
-
-            <TextView
-                android:id="@+id/stepsTaken"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textAlignment="center" />
+                android:layout_weight="1"
+                android:text="Logout" />
         </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/recentActivitiesContainers"
-        android:layout_width="252dp"
-        android:layout_height="593dp"
-        android:layout_marginTop="90dp"
+        android:id="@+id/home"
+        android:layout_width="409dp"
+        android:layout_height="683dp"
         android:gravity="center|top"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.229" />
+        android:padding="15dp"
+        android:visibility="visible"
+        tools:layout_editor_absoluteX="1dp"
+        tools:layout_editor_absoluteY="1dp">
 
-    <Button
-        android:id="@+id/logout"
-        android:layout_width="114dp"
-        android:layout_height="46dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginBottom="30dp"
-        android:onClick="logout"
-        android:text="Logout"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <LinearLayout
+            android:layout_width="350dp"
+            android:layout_height="45dp"
+            android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/refresh"
-        android:layout_width="122dp"
-        android:layout_height="47dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="30dp"
-        android:onClick="refresh"
-        android:text="Refresh"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <TextView
+                android:layout_width="302dp"
+                android:layout_height="wrap_content"
+                android:text="Welcome To ActiveBoost"
+                android:textAlignment="center"
+                android:textSize="25dp" />
 
-    <TextView
-        android:id="@+id/mainTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="142dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="143dp"
-        android:text="Your Weekly Fitness"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+            <ImageView
+                android:id="@+id/imageView6"
+                android:layout_width="50dp"
+                android:layout_height="34dp"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/fitness" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Join a group, compete in fitness challenges, and improve your health."
+            android:textAlignment="center"
+            android:textSize="17dp" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
