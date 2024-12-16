@@ -1,4 +1,4 @@
-package com.na_stewart.activeboost.ui;
+package com.na_stewart.activeboost;
 
 import android.util.Pair;
 import android.view.View;

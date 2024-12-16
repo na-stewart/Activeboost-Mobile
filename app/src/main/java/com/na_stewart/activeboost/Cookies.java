@@ -1,4 +1,4 @@
-package com.na_stewart.activeboost.api;
+package com.na_stewart.activeboost;
 
 import android.content.SharedPreferences;
 

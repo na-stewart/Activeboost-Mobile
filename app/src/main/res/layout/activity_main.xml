@@ -5,7 +5,6 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:visibility="gone"
     tools:context=".MainActivity">
 
     <LinearLayout
@@ -152,7 +151,7 @@
         android:layout_height="685dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.52"
@@ -248,8 +247,7 @@
 
             <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/border">
+                android:layout_height="match_parent">
 
                 <LinearLayout
                     android:id="@+id/groupChallenges"
@@ -406,7 +404,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:onClick="navgiate"
+            android:onClick="navigate"
             app:srcCompat="@drawable/run" />
 
         <ImageView
@@ -414,7 +412,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:onClick="navgiate"
+            android:onClick="navigate"
             app:srcCompat="@drawable/home" />
 
         <ImageView
@@ -422,7 +420,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:onClick="navgiate"
+            android:onClick="navigate"
             app:srcCompat="@drawable/user" />
 
     </LinearLayout>
@@ -526,33 +524,22 @@
         android:id="@+id/active"
         android:layout_width="409dp"
         android:layout_height="683dp"
+        android:layout_marginBottom="2dp"
         android:gravity="center|top"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
-            android:layout_width="346dp"
-            android:layout_height="58dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="301dp"
-                android:layout_height="60dp"
-                android:text="Welcome To ActiveBoost"
-                android:textAlignment="center"
-                android:textSize="25dp" />
-
-            <ImageView
-                android:layout_width="50dp"
-                android:layout_height="34dp"
-                android:layout_weight="1"
-                app:srcCompat="@drawable/fitness" />
-        </LinearLayout>
+        <TextView
+            android:layout_width="301dp"
+            android:layout_height="60dp"
+            android:text="Groups &amp; Challenges    "
+            android:textAlignment="textEnd"
+            android:textSize="25dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
