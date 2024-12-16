@@ -7,8 +7,6 @@ import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,20 +17,12 @@ import androidx.core.view.WindowInsetsCompat;
 import com.na_stewart.activeboost.api.Cookies;
 import com.na_stewart.activeboost.ui.ComponentManager;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;;
+;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,16 +50,13 @@ public class MainActivity extends AppCompatActivity {
     private void addContainersToManager() {
         componentManager.addComponent("init", findViewById(R.id.initContainer));
         componentManager.addComponent("login", findViewById(R.id.oAuthContainer));
-    }
-
-
-    public void logout(View view) {
-        sharedPreferences.edit().remove("Cookies").apply();
-        componentManager.onViewSwitchEvent("init");
+        componentManager.addComponent("home", findViewById(R.id.home));
+        componentManager.addComponent("active", findViewById(R.id.active));
+        componentManager.addComponent("profile", findViewById(R.id.profile));
     }
 
     public void login(View view) {
-        componentManager.onViewSwitchEvent("login");
+        componentManager.switchView("login");
         WebView webView = findViewById(R.id.oAuthWebView);
         CookieManager cookieManager = CookieManager.getInstance();
         webView.clearCache(true);
@@ -83,10 +70,42 @@ public class MainActivity extends AppCompatActivity {
                     HttpUrl httpUrl = HttpUrl.parse(url);
                     httpClient.cookieJar().saveFromResponse(httpUrl,
                             List.of(Cookie.parse(httpUrl, cookieManager.getCookie(url).trim())));
-                    componentManager.onViewSwitchEvent("main");
+                    componentManager.switchView("home");
+                    findViewById(R.id.nav).setVisibility(View.VISIBLE);
                 }
             }
         });
         webView.loadUrl(BASE_URL + "security/login");
     }
+
+    public void logout(View view) {
+        sharedPreferences.edit().remove("Cookies").apply();
+        componentManager.switchView("init");
+        findViewById(R.id.nav).setVisibility(View.GONE);
+    }
+
+    public void navgiate(View view){
+        String navClicked = getResources().getResourceEntryName(view.getId());
+        switch (navClicked) {
+            case "homeNav":
+                componentManager.switchView("home");
+                break;
+            case "activeNav":
+                componentManager.switchView("active");
+                break;
+            case "profileNav":
+                componentManager.switchView("profile");
+                break;
+        }
+    }
+
+    // ACTIVE
+
+    // HOME
+
+    // PROFILE
+
+    // EDIT GROUP
+
+    // EDIT CHALLENGE
 }
