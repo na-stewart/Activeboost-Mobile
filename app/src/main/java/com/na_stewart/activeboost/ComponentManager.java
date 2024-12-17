@@ -1,4 +1,4 @@
-package com.na_stewart.activeboost.ui;
+package com.na_stewart.activeboost;
 
 import android.util.Pair;
 import android.view.View;
@@ -11,7 +11,7 @@ public class ComponentManager {
     ArrayList<Pair<String, View>> components = new ArrayList<>();
 
 
-    public void onViewSwitchEvent(String view) {
+    public void switchView(String view) {
         for (Pair<String, View> component : components) {
             if (component.first.equals(view))
                 component.second.setVisibility(View.VISIBLE);
