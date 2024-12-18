@@ -14,7 +14,7 @@
         android:layout_marginBottom="2dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -84,6 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:onClick="editChallenge"
                 android:text="Update" />
 
             <TextView
@@ -103,54 +104,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="15dp">
-
-                <TextView
-                    android:layout_width="351dp"
-                    android:layout_height="wrap_content"
-                    android:text="Participants"
-                    android:textAlignment="center"
-                    android:textSize="25dp" />
-
-                <LinearLayout
-                    android:id="@+id/challengeParticipants"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="352dp"
-                        android:layout_height="36dp"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="225dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="na-stewart"
-                            android:textSize="15dp" />
-
-                        <Button
-                            android:id="@+id/button6"
-                            android:layout_width="24dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:text="Kick"
-                            android:textSize="10dp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-            </LinearLayout>
-        </ScrollView>
-
     </LinearLayout>
 
     <LinearLayout
@@ -159,7 +112,7 @@
         android:layout_height="685dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.52"
