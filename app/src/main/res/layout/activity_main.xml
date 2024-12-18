@@ -159,7 +159,7 @@
         android:layout_height="685dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.52"
@@ -190,16 +190,36 @@
             android:inputType="text" />
 
         <CheckBox
-            android:id="@+id/checkBox"
+            android:id="@+id/groupPrivate"
             android:layout_width="match_parent"
             android:layout_height="61dp"
             android:text="Private" />
 
-        <Button
-            android:id="@+id/groupUpdate"
-            android:layout_width="136dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Update" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/groupUpdate"
+                android:layout_width="136dp"
+                android:layout_height="wrap_content"
+                android:onClick="editGroup"
+                android:text="Update" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="22dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/groupDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Delete" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
@@ -292,7 +312,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/groupChallenges"
+                        android:id="@+id/groupEditableChallenges"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical">
@@ -319,13 +339,11 @@
                                 android:text="Can you travel the distance of a marathon this week?" />
 
                             <TextView
-                                android:id="@+id/textView2"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Fitness Points: 10" />
 
                             <TextView
-                                android:id="@+id/textView3"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Requires: 48 km" />
@@ -671,10 +689,6 @@
 
                             <TextView
                                 android:layout_width="match_parent"
-                                android:layout_height="9dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Marathon"
                                 android:textSize="20dp" />
@@ -685,13 +699,11 @@
                                 android:text="Can you travel the distance of a marathon this week?" />
 
                             <TextView
-                                android:id="@+id/textView2"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Fitness Points: 10" />
 
                             <TextView
-                                android:id="@+id/textView3"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Requires: 48 km" />
@@ -726,7 +738,7 @@
         android:gravity="center|top"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -856,8 +868,9 @@
                 android:id="@+id/groupInfoDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="TextView"
-                android:textAlignment="center" />
+                android:textAlignment="center"
+                android:textSize="18dp"
+                tools:text="Group Description" />
 
             <TextView
                 android:id="@+id/groupInviteCode"
@@ -878,6 +891,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:onClick="onLeaveGroup"
                     android:text="Leave" />
 
                 <TextView
@@ -917,7 +931,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="34dp"
-                            android:text="Leaderboard"
+                            android:text="Members"
                             android:textAlignment="center"
                             android:textSize="15dp" />
 
@@ -942,8 +956,9 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="10 Fitness Points"
-                                    android:textAlignment="center" />
+                                    android:textAlignment="center"
+                                    android:textSize="12dp"
+                                    tools:text="10 Fitness Points" />
 
                             </LinearLayout>
 
@@ -971,17 +986,13 @@
                         <LinearLayout
                             android:id="@+id/groupChallenges"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
                             android:orientation="vertical">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="9dp" />
 
                                 <TextView
                                     android:layout_width="match_parent"
@@ -992,35 +1003,31 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="Can you travel the distance of a marathon this week?" />
-
-                                <TextView
-                                    android:id="@+id/textView2"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="Fitness Points: 10" />
-
-                                <TextView
-                                    android:id="@+id/textView3"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:text="Requires: 48 km" />
+                                    android:textSize="12dp"
+                                    tools:text="Can you travel the distance of a marathon this week?" />
 
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="Expires: 2024-12-20" />
+                                    android:textSize="12dp"
+                                    tools:text="Requires: 40km" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="12dp"
+                                    tools:text="Expires: 10-30-2024" />
 
                                 <Button
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="69dp"
                                     android:layout_height="36dp"
                                     android:layout_weight="1"
                                     android:text="Join"
                                     android:textSize="10dp" />
 
                             </LinearLayout>
-                        </LinearLayout>
 
+                        </LinearLayout>
                     </LinearLayout>
                 </ScrollView>
 

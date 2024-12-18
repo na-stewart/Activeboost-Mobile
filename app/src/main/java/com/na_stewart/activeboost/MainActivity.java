@@ -3,7 +3,6 @@ package com.na_stewart.activeboost;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
@@ -11,6 +10,7 @@ import android.webkit.WebViewClient;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -27,14 +27,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
-import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -48,8 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private final ComponentManager componentManager = new ComponentManager();
     private OkHttpClient httpClient;
     private SharedPreferences sharedPreferences;
-    private int selectedGroupId = 0; // Easy reference id for updating/deleting selected group.
-    private int selectedChallengeId = 0; // Easy reference id for updating/deleting selected challenge.
+    private JSONObject selectedGroup; // Easy reference for updating/deleting selected group.
+    private JSONObject selectedChallenge;  // Easy reference for updating/deleting selected challenge.
 
     // INITIALIZATION
 
@@ -68,52 +71,6 @@ public class MainActivity extends AppCompatActivity {
         addContainersToManager();
         addValuesToChallengeThresholdSpinner();
         fillPublicGroups();
-
-        addButtonListeners();
-
-    }
-
-    private void addButtonListeners() {
-        // Single reference for the groupUpdate button
-        Button groupUpdateButton = findViewById(R.id.groupUpdate);
-
-        // Assign listener dynamically
-        groupUpdateButton.setOnClickListener(view -> {
-            if ("Create".equals(groupUpdateButton.getText().toString())) {
-                onPostGroup(view);
-            } else if ("Update".equals(groupUpdateButton.getText().toString())) {
-                onPutGroup(view);
-            }
-        });
-
-        // Listener for Create Challenge button
-        Button createChallengeButton = findViewById(R.id.challengeUpdate);
-        createChallengeButton.setOnClickListener(this::onPostChallenge);
-
-        // Listener for Update Challenge button
-        Button updateChallengeButton = findViewById(R.id.challengeUpdate);
-        updateChallengeButton.setOnClickListener(view -> {
-            if ("Create".equals(updateChallengeButton.getText().toString())) {
-                onPostChallenge(view);
-            } else if ("Update".equals(updateChallengeButton.getText().toString())) {
-                onPutChallenge(view);
-            }
-        });
-
-        // Navigation buttons
-        findViewById(R.id.homeNav).setOnClickListener(this::onNavigate);
-        findViewById(R.id.activeNav).setOnClickListener(this::onNavigate);
-        findViewById(R.id.profileNav).setOnClickListener(this::onNavigate);
-
-        // Login and Logout buttons
-        findViewById(R.id.loginButton).setOnClickListener(this::login);
-        findViewById(R.id.logout).setOnClickListener(this::logout);
-
-        // Create Challenge navigation
-        findViewById(R.id.createChallenge).setOnClickListener(this::onCreateChallenge);
-
-        // Create Group navigation
-        findViewById(R.id.createGroup).setOnClickListener(this::onCreateGroup);
     }
 
     private void addContainersToManager() {
@@ -167,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
             case "activeNav":
                 componentManager.switchView("groupsAndChallenges");
                 fillMyGroups();
+                fillMyChallenges();
                 break;
             case "profileNav":
                 componentManager.switchView("profile");
@@ -192,8 +150,15 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(() ->  publicGroupsContainer.addView(publicGroupView));
                     }
                 }
-                else
-                    runOnUiThread(() -> logout(null));
+                else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> {
+                        toast(errorJson.optString("message", "An unexpected error occurred."));
+                        logout(null);
+                    });
+                }
+
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -250,8 +215,11 @@ public class MainActivity extends AppCompatActivity {
                     .put(RequestBody.create(new byte[0], null)).build()).execute()) {
                 if (response.code() == 200)
                     toast("Group joined successfully, you will find it in your groups & challenges.");
-                else
-                    toast(new JSONObject(response.body().string()));
+                else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -263,15 +231,19 @@ public class MainActivity extends AppCompatActivity {
     public void onCreateGroup(View view) {
         // Opens edit group window, not used for API call.
         componentManager.switchView("editGroup");
-        selectedGroupId = 0;
+        selectedGroup = null;
         ((Button) findViewById(R.id.groupUpdate)).setText("Create");
+        ((EditText) findViewById(R.id.groupTitleField)).setText("");
+        ((EditText) findViewById(R.id.groupDescription)).setText("");
+        ((CheckBox) findViewById(R.id.groupPrivate)).setChecked(false);
     }
+
     private void fillMyGroups() {
         LinearLayout myGroupsContainer = findViewById(R.id.yourGroups);
         myGroupsContainer.removeAllViews();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
-            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group").build()).execute()) {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/you").build()).execute()) {
                 if (response.code() == 200)
                 {
                     JSONObject json = new JSONObject(response.body().string());
@@ -282,8 +254,11 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(() ->  myGroupsContainer.addView(publicGroupView));
                     }
                 }
-                else
-                    runOnUiThread(() -> logout(null));
+                else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -323,84 +298,143 @@ public class MainActivity extends AppCompatActivity {
         return parentLayout;
     }
 
-    private void openGroupInfo(JSONObject group)  {
-        componentManager.switchView("groupInfo");
-        try {
-            selectedGroupId = group.getInt("id");
-            ((TextView) findViewById(R.id.groupTitle)).setText(group.getString("title"));
-            ((TextView) findViewById(R.id.groupInfoDescription)).setText(group.getString("description"));
-            ((TextView) findViewById(R.id.groupInviteCode)).setText(String.format("Invite code: %s", group.getString("invite_code")));
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private void fillMyChallenges() {
         LinearLayout myChallengesContainer = findViewById(R.id.yourChallenges);
         myChallengesContainer.removeAllViews();
-
-        // Execute the network request on a background thread
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
-            try {
-                String url = BASE_URL + "group/challenge/you";
-                Response response = httpClient.newCall(new Request.Builder().url(url).build()).execute();
-
-                if (response.code() == 200) {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge/you").build()).execute()) {
+                if (response.code() == 200)
+                {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray challenges = json.getJSONArray("data");
-
-                    for (int i = 0; i < challenges.length(); i++) {
-                        JSONObject challenge = challenges.getJSONObject(i);
-                        LinearLayout challengeView = getChallengeView(challenge);
-                        runOnUiThread(() -> myChallengesContainer.addView(challengeView));
+                    JSONArray data = json.getJSONArray( "data");
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        LinearLayout myChallengeView = getChallengeView(item, "Redeem");
+                        runOnUiThread(() ->  myChallengesContainer.addView(myChallengeView));
                     }
-                } else {
+                }
+                else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to fetch your challenges")));
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
                 }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while fetching your challenges."));
             }
         });
     }
 
-    private LinearLayout getMyChallengeView(JSONObject challenge) throws JSONException {
-        LinearLayout parentLayout = new LinearLayout(getApplicationContext());
-        parentLayout.setOrientation(LinearLayout.VERTICAL);
-        parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+    private LinearLayout getChallengeView(JSONObject challenge, String buttonType) throws JSONException {
+        LinearLayout linearLayout = new LinearLayout(getApplicationContext());
+        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        ));
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        TextView titleTextView = new TextView(getApplicationContext());
+        titleTextView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
-        parentLayout.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
-
-        // Title TextView
-        TextView titleTextView = new TextView(getApplicationContext());
         titleTextView.setText(challenge.getString("title"));
-        titleTextView.setTextSize(18);
-        parentLayout.addView(titleTextView);
-
-        // Description TextView
+        titleTextView.setTextSize(20); // Text size in sp
+        linearLayout.addView(titleTextView);
         TextView descriptionTextView = new TextView(getApplicationContext());
+        descriptionTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
         descriptionTextView.setText(challenge.getString("description"));
-        descriptionTextView.setTextSize(14);
-        parentLayout.addView(descriptionTextView);
+        linearLayout.addView(descriptionTextView);
+        TextView fitnessPointsTextView = new TextView(getApplicationContext());
+        fitnessPointsTextView.setId(View.generateViewId());
+        fitnessPointsTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        fitnessPointsTextView.setText(String.format("Fitness Points: %s",  challenge.getString("reward")));
+        linearLayout.addView(fitnessPointsTextView);
+        TextView requiresTextView = new TextView(getApplicationContext());
+        requiresTextView.setId(View.generateViewId());
+        requiresTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        String thresholdType = challenge.getString("threshold_type");
+        requiresTextView.setText(String.format("Requires: %s %s", challenge.getString("completion_threshold"),
+                thresholdType.equals("distance") ? "km": thresholdType));
+        linearLayout.addView(requiresTextView);
+        TextView expiresTextView = new TextView(getApplicationContext());
+        expiresTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        expiresTextView.setText(String.format("Expires: %s", challenge.getString("expiration_date").substring(0, 10)));
+        linearLayout.addView(expiresTextView);
+        Button button = new Button(getApplicationContext());
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(dpToPx(70), dpToPx(37), 1.0f);
+        buttonParams.weight = 1;
+        button.setLayoutParams(buttonParams);
+        button.setText(buttonType);
+        String challengeId = challenge.getString("id");
+        if (buttonType.equals("Redeem"))
+            button.setOnClickListener((View v) -> redeemChallenge(challengeId));
+        else if (buttonType.equals("Join"))
+            button.setOnClickListener((View v) -> joinChallenge(challengeId));
+        else if (buttonType.equals("Edit"))
+            button.setOnClickListener((View v) -> {
+                selectedChallenge = challenge;
+                componentManager.switchView("editChallenge");
+                ((Button) findViewById(R.id.challengeUpdate)).setText("Update");
+                try {
+                    ((TextView) findViewById(R.id.challengeTitle)).setText(challenge.getString("title"));
+                    ((TextView) findViewById(R.id.challengeDescription)).setText(challenge.getString("description"));
+                    ((TextView) findViewById(R.id.challengeReward)).setText(challenge.getString("reward"));
+                    ((TextView) findViewById(R.id.challengeCompletionThreshold)).setText(challenge.getString("completion_threshold"));
+                    Spinner thresholdTypeSpinner = findViewById(R.id.challengeThresholdType);
+                    ArrayAdapter<String> retrievedAdapter = (ArrayAdapter<String>) thresholdTypeSpinner.getAdapter();
+                    int position = retrievedAdapter.getPosition(challenge.getString("threshold_type"));
+                    if (position >= 0)
+                        thresholdTypeSpinner.setSelection(position);
+                    String expirationDateStr = challenge.getString("expiration_date");
+                    String dateCreatedStr = challenge.getString("date_created");
+                    String expirationDateClean = expirationDateStr.substring(0, 19);
+                    String dateCreatedClean = dateCreatedStr.substring(0, 19);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    LocalDateTime expirationDate = LocalDateTime.parse(expirationDateClean, formatter);
+                    LocalDateTime dateCreated = LocalDateTime.parse(dateCreatedClean, formatter);
+                    ((TextView) findViewById(R.id.challengePeriod)).setText(String.valueOf((int) ChronoUnit.DAYS.between(dateCreated, expirationDate)));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        button.setTextSize(10);
+        linearLayout.addView(button);
+        return linearLayout;
+    }
 
-        // Reward TextView
-        TextView rewardTextView = new TextView(getApplicationContext());
-        rewardTextView.setText("Reward: " + challenge.getString("reward"));
-        rewardTextView.setTextSize(14);
-        parentLayout.addView(rewardTextView);
-
-        // Redeem Button
-        Button redeemButton = new Button(getApplicationContext());
-        redeemButton.setText("Redeem");
-        redeemButton.setOnClickListener(v -> redeemChallenge(challenge));
-        parentLayout.addView(redeemButton);
-
-        return parentLayout;
+    private void redeemChallenge(String challengeId) {
+        String url = BASE_URL + "group/challenge/redeem?id=" + challengeId;
+        // Execute the network request on a background thread
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(
+                    new Request.Builder().url(url).put(RequestBody.create(new byte[0], null)).build()
+            ).execute()) {
+                if (response.code() == 200) {
+                    runOnUiThread(() -> toast("Challenge redeemed successfully!"));
+                    fillMyChallenges(); // Refresh challenges
+                } else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     // PROFILE
@@ -409,522 +443,325 @@ public class MainActivity extends AppCompatActivity {
 
     // GROUP INFO
 
+    private void openGroupInfo(JSONObject group)  {
+        componentManager.switchView("groupInfo");
+        try {
+            selectedGroup = group;
+            ((TextView) findViewById(R.id.groupTitle)).setText(group.getString("title"));
+            ((TextView) findViewById(R.id.groupInfoDescription)).setText(group.getString("description"));
+            ((TextView) findViewById(R.id.groupInviteCode)).setText(String.format("Invite code: %s", group.getString("invite_code")));
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        fillGroupChallenges();
+        fillGroupLeaderboard();
+
+    }
+
     public void onCreateChallenge(View view) {
-        componentManager.switchView("editChallenge");
-        selectedChallengeId = 0;
-        ((Button) findViewById(R.id.challengeUpdate)).setText("Create");
+        // Opens create challenge window, not use for API call.
+        if (selectedGroup != null) {
+            componentManager.switchView("editChallenge");
+            ((Button) findViewById(R.id.challengeUpdate)).setText("Create");
+        } else
+            toast("You must first create a group.");
     }
 
     public void onEditGroup(View view) {
         // Opens edit group window, not used for API call.
         // selectedGroupId set via info button clicked in groups & challenges window.
         componentManager.switchView("editGroup");
-        ((Button) findViewById(R.id.groupUpdate)).setText("Update");
+        try {
+            ((EditText) findViewById(R.id.groupTitleField)).setText(selectedGroup.getString("title"));
+            ((EditText) findViewById(R.id.groupDescription)).setText(selectedGroup.getString("description"));
+            ((CheckBox) findViewById(R.id.groupPrivate)).setChecked(selectedGroup.getBoolean("private"));
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        fillGroupMembers();
+        fillEditGroupChallenges();
     }
 
-    private void fillLeaderboard() {
-        LinearLayout leaderboardContainer = findViewById(R.id.groupLeaderboard);
-        leaderboardContainer.removeAllViews();
-
+    public void onLeaveGroup(View view) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
-            try {
-                String url = BASE_URL + "group/leaderboard?id=" + selectedGroupId;
-                Response response = httpClient.newCall(new Request.Builder().url(url).build()).execute();
-
+            try (Response response = httpClient.newCall(
+                    new Request.Builder().url(BASE_URL + "group/leave?id=" + selectedGroup.getString("id")).put(RequestBody.create(new byte[0], null)).build()
+            ).execute()) {
                 if (response.code() == 200) {
-                    JSONObject json = new JSONObject(response.body().string());
-                    JSONArray participants = json.getJSONArray("data");
-
-                    for (int i = 0; i < participants.length(); i++) {
-                        JSONObject participant = participants.getJSONObject(i);
-                        LinearLayout participantView = getLeaderboardView(participant);
-                        runOnUiThread(() -> leaderboardContainer.addView(participantView));
-                    }
+                    runOnUiThread(() ->  {
+                        toast("Group left successfully!");
+                        componentManager.switchView("home");
+                    });
+                    selectedGroup = null;
                 } else {
-                    String errorBody = response.body().string();
-                    JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to fetch leaderboard")));
+                    toast(new JSONObject(response.body().string()).getString("message"));
                 }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while fetching leaderboard."));
             }
         });
-    }
-
-    private LinearLayout getLeaderboardView(JSONObject participant) throws JSONException {
-        LinearLayout parentLayout = new LinearLayout(getApplicationContext());
-        parentLayout.setOrientation(LinearLayout.HORIZONTAL);
-        parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-        parentLayout.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
-
-        // Participant Name
-        TextView nameTextView = new TextView(getApplicationContext());
-        nameTextView.setText(participant.getString("name"));
-        nameTextView.setTextSize(16);
-        parentLayout.addView(nameTextView);
-
-        // Participant Score
-        TextView scoreTextView = new TextView(getApplicationContext());
-        scoreTextView.setText("Points: " + participant.getString("points"));
-        scoreTextView.setTextSize(16);
-        parentLayout.addView(scoreTextView);
-
-        return parentLayout;
     }
 
     private void fillGroupChallenges() {
-        LinearLayout groupChallengesContainer = findViewById(R.id.groupChallenges);
-        groupChallengesContainer.removeAllViews();
+        LinearLayout groupChallenges = findViewById(R.id.groupChallenges);
+        groupChallenges.removeAllViews();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge/you").build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray data = json.getJSONArray( "data");
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        LinearLayout myChallengeView = getChallengeView(item, "Join");
+                        runOnUiThread(() -> groupChallenges.addView(myChallengeView));
+                    }
+                }
+                else
+                    toast(new JSONObject(response.body().string()).getString("message"));
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
+
+    private void joinChallenge(String challengeId) {
         // Execute the network request on a background thread
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
-            try {
-                String url = BASE_URL + "group/challenge?group=" + selectedGroupId;
-                Response response = httpClient.newCall(new Request.Builder().url(url).build()).execute();
-
+            try (Response response = httpClient.newCall(
+                    new Request.Builder().url(BASE_URL + "group/challenge/join?group=" + selectedGroup.getString("id") + "&id=" + challengeId).put(RequestBody.create(new byte[0], null)).build()
+            ).execute()) {
                 if (response.code() == 200) {
-                    JSONObject json = new JSONObject(response.body().string());
-                    JSONArray challenges = json.getJSONArray("data");
-
-                    for (int i = 0; i < challenges.length(); i++) {
-                        JSONObject challenge = challenges.getJSONObject(i);
-                        LinearLayout challengeView = getChallengeView(challenge);
-                        runOnUiThread(() -> groupChallengesContainer.addView(challengeView));
-                    }
+                    runOnUiThread(() -> toast("Challenge joined successfully!"));
+                    fillMyChallenges(); // Refresh challenges
                 } else {
-                    String errorBody = response.body().string();
-                    JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to fetch challenges")));
+                    toast(new JSONObject(response.body().string()).getString("message"));
                 }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while fetching challenges."));
             }
         });
     }
 
-    private LinearLayout getChallengeView(JSONObject challenge) throws JSONException {
-        LinearLayout parentLayout = new LinearLayout(getApplicationContext());
-        parentLayout.setOrientation(LinearLayout.VERTICAL);
-        parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+    private void fillGroupLeaderboard() {
+        LinearLayout groupLeaderboard = findViewById(R.id.groupLeaderboard);
+        groupLeaderboard.removeAllViews();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/leaderboard?id=" + selectedGroup.getString("id")).build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray data = json.getJSONArray( "data");
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        LinearLayout leaderboardView = getLeaderboardView(item);
+                        runOnUiThread(() -> groupLeaderboard.addView(leaderboardView));
+                    }
+                }
+                else
+                    toast(new JSONObject(response.body().string()).getString("message"));
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+
+    }
+
+    private LinearLayout getLeaderboardView(JSONObject member) throws JSONException {
+        LinearLayout linearLayout = new LinearLayout(getApplicationContext());
+        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        ));
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        TextView nameTextView = new TextView(getApplicationContext());
+        nameTextView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
-        parentLayout.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
-
-        // Title TextView
-        TextView titleTextView = new TextView(getApplicationContext());
-        titleTextView.setText(challenge.getString("title"));
-        titleTextView.setTextSize(18);
-        parentLayout.addView(titleTextView);
-
-        // Description TextView
-        TextView descriptionTextView = new TextView(getApplicationContext());
-        descriptionTextView.setText(challenge.getString("description"));
-        descriptionTextView.setTextSize(14);
-        parentLayout.addView(descriptionTextView);
-
-        // Reward TextView
-        TextView rewardTextView = new TextView(getApplicationContext());
-        rewardTextView.setText("Reward: " + challenge.getString("reward"));
-        rewardTextView.setTextSize(14);
-        parentLayout.addView(rewardTextView);
-
-        // Completion Threshold TextView
-        TextView thresholdTextView = new TextView(getApplicationContext());
-        thresholdTextView.setText("Threshold: " + challenge.getString("completion_threshold") + " " +
-                challenge.getString("threshold_type"));
-        thresholdTextView.setTextSize(14);
-        parentLayout.addView(thresholdTextView);
-
-        // Expiration Date TextView
-        TextView expirationDateTextView = new TextView(getApplicationContext());
-        expirationDateTextView.setText("Expires on: " + challenge.getString("expiration_date"));
-        expirationDateTextView.setTextSize(14);
-        parentLayout.addView(expirationDateTextView);
-
-        // Edit or Join Button
-        Button actionButton = new Button(getApplicationContext());
-        actionButton.setText("Join");
-        actionButton.setOnClickListener(v -> joinChallenge(challenge));
-        parentLayout.addView(actionButton);
-
-        return parentLayout;
-    }
-
-    private void joinChallenge(JSONObject challenge) {
-        try {
-            String challengeId = challenge.getString("id");
-            String url = BASE_URL + "group/challenge/join?id=" + challengeId;
-
-            // Execute the network request on a background thread
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.execute(() -> {
-                try (Response response = httpClient.newCall(
-                        new Request.Builder().url(url).post(RequestBody.create(new byte[0], null)).build()
-                ).execute()) {
-                    if (response.code() == 200) {
-                        runOnUiThread(() -> toast("Successfully joined the challenge!"));
-                        fillGroupChallenges(); // Refresh challenges
-                    } else {
-                        String errorBody = response.body().string();
-                        JSONObject errorJson = new JSONObject(errorBody);
-                        runOnUiThread(() -> toast(errorJson.optString("message", "Failed to join the challenge")));
-                    }
-                } catch (IOException | JSONException e) {
-                    e.printStackTrace();
-                    runOnUiThread(() -> toast("An error occurred while joining the challenge."));
-                }
-            });
-        } catch (JSONException e) {
-            e.printStackTrace();
-            toast("Invalid challenge data.");
-        }
-    }
-
-    private void redeemChallenge(JSONObject challenge) {
-        try {
-            String challengeId = challenge.getString("id");
-            String url = BASE_URL + "group/challenge/redeem?id=" + challengeId;
-
-            // Execute the network request on a background thread
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.execute(() -> {
-                try (Response response = httpClient.newCall(
-                        new Request.Builder().url(url).post(RequestBody.create(new byte[0], null)).build()
-                ).execute()) {
-                    if (response.code() == 200) {
-                        runOnUiThread(() -> toast("Challenge redeemed successfully!"));
-                        fillMyChallenges(); // Refresh challenges
-                    } else {
-                        String errorBody = response.body().string();
-                        JSONObject errorJson = new JSONObject(errorBody);
-                        runOnUiThread(() -> toast(errorJson.optString("message", "Failed to redeem the challenge")));
-                    }
-                } catch (IOException | JSONException e) {
-                    e.printStackTrace();
-                    runOnUiThread(() -> toast("An error occurred while redeeming the challenge."));
-                }
-            });
-        } catch (JSONException e) {
-            e.printStackTrace();
-            toast("Invalid challenge data.");
-        }
-    }
-
-    private LinearLayout getGroupChallengesView(JSONObject challenge) throws JSONException {
-        LinearLayout parentLayout = new LinearLayout(getApplicationContext());
-        parentLayout.setOrientation(LinearLayout.VERTICAL);
-        parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+        nameTextView.setText(member.getJSONObject("member").getString("username"));
+        nameTextView.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+        nameTextView.setTextSize(20);
+        linearLayout.addView(nameTextView);
+        TextView pointsTextView = new TextView(getApplicationContext());
+        pointsTextView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
-        parentLayout.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
-
-        // Title
-        TextView titleTextView = new TextView(getApplicationContext());
-        titleTextView.setText(challenge.getString("title"));
-        titleTextView.setTextSize(18);
-        parentLayout.addView(titleTextView);
-
-        // Description
-        TextView descriptionTextView = new TextView(getApplicationContext());
-        descriptionTextView.setText(challenge.getString("description"));
-        descriptionTextView.setTextSize(14);
-        parentLayout.addView(descriptionTextView);
-
-        // Reward
-        TextView rewardTextView = new TextView(getApplicationContext());
-        rewardTextView.setText("Reward: " + challenge.getString("reward"));
-        rewardTextView.setTextSize(14);
-        parentLayout.addView(rewardTextView);
-
-        // Edit Button
-        Button editButton = new Button(getApplicationContext());
-        editButton.setText("Edit");
-        editButton.setOnClickListener(v -> openEditChallenge(challenge));
-        parentLayout.addView(editButton);
-
-        return parentLayout;
+        pointsTextView.setText(String.format("%s Fitness Points", member.getString("fitness_points")));
+        pointsTextView.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+        linearLayout.addView(pointsTextView);
+        return linearLayout;
     }
 
-    private void openEditChallenge(JSONObject challenge) {
-        try {
-            selectedChallengeId = challenge.getInt("id");
 
-            // Populate fields with existing data
-            ((TextView) findViewById(R.id.challengeTitle)).setText(challenge.getString("title"));
-            ((TextView) findViewById(R.id.challengeDescription)).setText(challenge.getString("description"));
-            ((TextView) findViewById(R.id.challengeReward)).setText(challenge.getString("reward"));
-            ((TextView) findViewById(R.id.challengeCompletionThreshold)).setText(challenge.getString("completion_threshold"));
-            ((Spinner) findViewById(R.id.challengeThresholdType)).setSelection(
-                    getThresholdTypeIndex(challenge.getString("threshold_type"))
-            );
-            ((TextView) findViewById(R.id.challengePeriod)).setText(challenge.getString("expiration_days"));
 
-            // Switch to edit challenge view
-            componentManager.switchView("editChallenge");
-            ((Button) findViewById(R.id.challengeUpdate)).setText("Update");
-        } catch (JSONException e) {
-            e.printStackTrace();
-            toast("Failed to load challenge data for editing.");
-        }
-    }
-
-    // Helper method to get the index of a threshold type
-    private int getThresholdTypeIndex(String thresholdType) {
-        List<String> spinnerValues = List.of("steps", "distance", "calories", "minutesVeryActive", "minutesFairlyActive", "floors");
-        int index = spinnerValues.indexOf(thresholdType);
-        return index == -1 ? 0 : index; // Default to the first item if not found
-    }
 
     // EDIT GROUP
 
-    public void onPutGroup(View view) {
-        String title = ((TextView) findViewById(R.id.groupTitleField)).getText().toString();
-        String description = ((TextView) findViewById(R.id.groupDescription)).getText().toString();
-        boolean isPrivate = ((CheckBox) findViewById(R.id.checkBox)).isChecked();
-
-        if (title.isEmpty() || description.isEmpty()) {
-            toast("Title and description cannot be empty!");
-            return;
+    public void editGroup(View view) {
+        Button button = (Button) view;
+        System.out.println(button.getText());
+        if (button.getText().equals("Create")) {
+            editGroup("post");
+        } else if (button.getText().equals("Update")) {
+            editGroup("put");
         }
-
-        MultipartBody body = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("id", String.valueOf(selectedGroupId))
-                .addFormDataPart("title", title)
-                .addFormDataPart("description", description)
-                .addFormDataPart("private", String.valueOf(isPrivate))
-                .build();
-
-        Request request = new Request.Builder()
-                .url(BASE_URL + "group")
-                .put(body)
-                .build();
-
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(() -> {
-            try (Response response = httpClient.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    runOnUiThread(() -> {
-                        toast("Group updated successfully!");
-                        fillMyGroups();
-                        componentManager.switchView("groupsAndChallenges");
-                    });
-                } else {
-                    String errorBody = response.body().string();
-                    JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to update group")));
-                }
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while updating the group."));
-            }
-        });
     }
 
-//    public void onPostGroup(View view) {
-//        // Method triggered by button for creating group.
-//        // https://activeboost.na-stewart.com/api/v1/group POST
-//        // Form data: title, description, private.
-//        selectedGroupId = 0; // Set to returned group id when created.
-//    }
-
-    public void onPostGroup(View view) {
-        // Retrieve inputs from the form
+    public void editGroup(String requestType) {
         String title = ((TextView) findViewById(R.id.groupTitleField)).getText().toString();
         String description = ((TextView) findViewById(R.id.groupDescription)).getText().toString();
-        boolean isPrivate = ((CheckBox) findViewById(R.id.checkBox)).isChecked();
-
-        // Validate inputs
+        boolean isPrivate = ((CheckBox) findViewById(R.id.groupPrivate)).isChecked();
         if (title.isEmpty() || description.isEmpty()) {
             toast("Title and description cannot be empty!");
             return;
         }
-
-        // Build the form-data body
         MultipartBody body = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("title", title)
                 .addFormDataPart("description", description)
                 .addFormDataPart("private", String.valueOf(isPrivate))
                 .build();
-
-        // Create the HTTP POST request
-        Request request = new Request.Builder()
-                .url(BASE_URL + "group")
-                .post(body)
-                .build();
-
-        // Execute the request in a separate thread
         ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Request request;
+        if (requestType.equals("put")) {
+            try {
+                request = new Request.Builder().url(BASE_URL + "group?id=" + selectedGroup.getString("id")).put(body).build();
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else
+            request = new Request.Builder().url(BASE_URL + "group").post(body).build();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(request).execute()) {
                 if (response.isSuccessful()) {
-                    // Parse the success response
-                    JSONObject responseBody = new JSONObject(response.body().string());
+                    selectedGroup = new JSONObject(response.body().string()).getJSONObject("data");
                     runOnUiThread(() -> {
-                        toast("Group created successfully!");
-
-                        // Clear the input fields
-                        ((TextView) findViewById(R.id.groupTitleField)).setText("");
-                        ((TextView) findViewById(R.id.groupDescription)).setText("");
-                        ((CheckBox) findViewById(R.id.checkBox)).setChecked(false);
-
-                        // Refresh the groups list and switch to the home view
-                        fillPublicGroups();
-                        componentManager.switchView("home");
+                        toast("Group processed successfully!");
+                        ((Button) findViewById(R.id.groupUpdate)).setText("Update");
                     });
-                } else {
-                    // Handle server error response
-                    String errorBody = response.body().string();
-                    JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to create group")));
-                }
+                } else
+                    toast(new JSONObject(response.body().string()).getString("message"));
             } catch (IOException | JSONException e) {
-                // Handle network or JSON parsing errors
                 e.printStackTrace();
                 runOnUiThread(() -> toast("An error occurred while creating the group."));
             }
         });
     }
 
+    private void fillEditGroupChallenges() {
+        LinearLayout groupChallenges = findViewById(R.id.groupEditableChallenges);
+        groupChallenges.removeAllViews();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge/you").build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray data = json.getJSONArray( "data");
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        LinearLayout myChallengeView = getChallengeView(item, "Edit");
+                        runOnUiThread(() -> groupChallenges.addView(myChallengeView));
+                    }
+                }
+                else
+                    toast(new JSONObject(response.body().string()).getString("message"));
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void fillGroupMembers() {
+        LinearLayout groupMembers = findViewById(R.id.groupMembers);
+        groupMembers.removeAllViews();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/members?id=" + selectedGroup.getString("id")).build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray data = json.getJSONArray( "data");
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        LinearLayout myChallengeView = getMemberView(item);
+                        runOnUiThread(() -> groupMembers.addView(myChallengeView));
+                    }
+                }
+                else
+                    toast(new JSONObject(response.body().string()).getString("message"));
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public  LinearLayout getMemberView(JSONObject member) throws JSONException {
+        // Create the parent LinearLayout
+        LinearLayout linearLayout = new LinearLayout(getApplicationContext());
+        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        ));
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setGravity(android.view.Gravity.CENTER | android.view.Gravity.TOP);
+
+        // Create TextView for "na-stewart"
+        TextView nameTextView = new TextView(getApplicationContext());
+        nameTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        nameTextView.setText(member.getString("username"));
+        nameTextView.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+        nameTextView.setTextSize(20); // Text size in sp
+        linearLayout.addView(nameTextView);
+
+        // Create Button for "Kick"
+        Button kickButton = new Button(getApplicationContext());
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(dpToPx(75), dpToPx(32));
+        kickButton.setLayoutParams(buttonParams);
+        kickButton.setId(View.generateViewId());
+        kickButton.setText("Kick");
+        kickButton.setTextSize(10); // Text size in sp
+        linearLayout.addView(kickButton);
+
+        // Return the constructed LinearLayout
+        return linearLayout;
+    }
+
     // EDIT CHALLENGE
 
     public void onPutChallenge(View view) {
-        String title = ((TextView) findViewById(R.id.challengeTitle)).getText().toString();
-        String description = ((TextView) findViewById(R.id.challengeDescription)).getText().toString();
-        String reward = ((TextView) findViewById(R.id.challengeReward)).getText().toString();
-        String completionThreshold = ((TextView) findViewById(R.id.challengeCompletionThreshold)).getText().toString();
-        String thresholdType = ((Spinner) findViewById(R.id.challengeThresholdType)).getSelectedItem().toString();
-        String expirationDays = ((TextView) findViewById(R.id.challengePeriod)).getText().toString();
-
-        if (title.isEmpty() || description.isEmpty() || reward.isEmpty() || completionThreshold.isEmpty() || expirationDays.isEmpty()) {
-            toast("All fields are required!");
-            return;
-        }
-
-        MultipartBody body = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("title", title)
-                .addFormDataPart("description", description)
-                .addFormDataPart("reward", reward)
-                .addFormDataPart("completion_threshold", completionThreshold)
-                .addFormDataPart("threshold_type", thresholdType) // Ensure this is correct
-                .addFormDataPart("expiration_days", expirationDays)
-                .build();
-
-        String url = BASE_URL + "group/challenge?group=" + selectedGroupId;
-
-        Request request = new Request.Builder()
-                .url(url)
-                .put(body)
-                .build();
-
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(() -> {
-            try (Response response = httpClient.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    runOnUiThread(() -> {
-                        toast("Challenge updated successfully!");
-                        fillGroupChallenges();
-                        componentManager.switchView("groupInfo");
-                    });
-                } else {
-                    String errorBody = response.body().string();
-                    JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to update challenge")));
-                }
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while updating the challenge."));
-            }
-        });
+        // Method triggered by button for updating group.
+        // https://activeboost.na-stewart.com/api/v1/group/challenge?group=1 PUT
+        // Form data: title, description, reward, threshold, period, threshold-type
     }
+
     public void onPostChallenge(View view) {
-        String title = ((TextView) findViewById(R.id.challengeTitle)).getText().toString();
-        String description = ((TextView) findViewById(R.id.challengeDescription)).getText().toString();
-        String reward = ((TextView) findViewById(R.id.challengeReward)).getText().toString();
-        String completionThreshold = ((TextView) findViewById(R.id.challengeCompletionThreshold)).getText().toString();
-        String thresholdType = ((Spinner) findViewById(R.id.challengeThresholdType)).getSelectedItem().toString();
-        Log.d("ChallengeDebug", "Selected threshold_type: " + thresholdType);
-        String expirationDays = ((TextView) findViewById(R.id.challengePeriod)).getText().toString();
-
-        // Validate inputs
-        if (title.isEmpty() || description.isEmpty() || reward.isEmpty() || completionThreshold.isEmpty() || expirationDays.isEmpty()) {
-            toast("All fields are required!");
-            return;
-        }
-
-        List<String> validThresholdTypes = List.of("calories", "distance", "elevation", "floors", "minutesVeryActive", "minutesFairlyActive");
-        if (!validThresholdTypes.contains(thresholdType)) {
-            toast("Invalid threshold type selected!");
-            return;
-        }
-
-        if (selectedGroupId == 0) {
-            toast("Please select a valid group before creating a challenge.");
-            return;
-        }
-
-        // Build the form-data body
-        MultipartBody body = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("title", title)
-                .addFormDataPart("description", description)
-                .addFormDataPart("reward", reward)
-                .addFormDataPart("threshold", completionThreshold)
-                .addFormDataPart("threshold-type", thresholdType)
-                .addFormDataPart("period", expirationDays)
-                .build();
-
-        String url = BASE_URL + "group/challenge?group=" + selectedGroupId;
-
-        // Send the request
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
-
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(() -> {
-            try (Response response = httpClient.newCall(request).execute()) {
-                if (response.isSuccessful()) {
-                    JSONObject responseBody = new JSONObject(response.body().string());
-                    runOnUiThread(() -> {
-                        toast("Challenge created successfully!");
-                        fillGroupChallenges();
-                        componentManager.switchView("groupInfo");
-                    });
-                } else {
-                    String errorBody = response.body().string();
-                    JSONObject errorJson = new JSONObject(errorBody);
-                    runOnUiThread(() -> toast(errorJson.optString("message", "Failed to create challenge")));
-                }
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while creating the challenge."));
-            }
-        });
+        // Method triggered by button for creating group.
+        // https://activeboost.na-stewart.com/api/v1/group/challenge?group=1 POST
+        // Form data: title, description, reward, threshold, period, threshold-type
+        // selectedChallengeId = "0"; // Set to returned challenge id when created.
     }
 
     private void addValuesToChallengeThresholdSpinner() {
-        List<String> spinnerValues = List.of(
-                "calories",
-                "distance",
-                "elevation",
-                "floors",
-                "minutesVeryActive",
-                "minutesFairlyActive",
-                "steps"
-        );
+        // Spinner is a dropdown.
+        List<String> spinnerValues = new ArrayList<>();
+        spinnerValues.add("steps");
+        spinnerValues.add("distance");
+        spinnerValues.add("calories");
+        spinnerValues.add("minutesVeryActive");
+        spinnerValues.add("minutesFairlyActive");
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -939,10 +776,6 @@ public class MainActivity extends AppCompatActivity {
 
     private int dpToPx(int dp) {
         return Math.round(dp * getApplicationContext().getResources().getDisplayMetrics().density);
-    }
-
-    private void toast(JSONObject error) throws JSONException {
-        toast(error.getString("message"));
     }
 
     private void toast(String text) {
