@@ -14,7 +14,7 @@
         android:layout_marginBottom="2dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -161,7 +161,6 @@
                 android:text="Update" />
 
             <TextView
-                android:id="@+id/textView"
                 android:layout_width="22dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
@@ -429,7 +428,7 @@
         android:layout_height="683dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -469,6 +468,90 @@
                     android:textAlignment="center"
                     android:textSize="20dp" />
 
+                <LinearLayout
+                    android:id="@+id/todayContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="10dp"
+                    android:alpha="1"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:visibility="visible"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="125dp"
+                            android:layout_height="wrap_content"
+                            android:text="Calories Burned"
+                            android:textAlignment="center" />
+
+                        <TextView
+                            android:id="@+id/caloriesBurned"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textAlignment="center" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="145dp"
+                            android:layout_height="wrap_content"
+                            android:text="Distance Traveled"
+                            android:textAlignment="center" />
+
+                        <TextView
+                            android:id="@+id/timeActive"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textAlignment="center" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="118dp"
+                            android:layout_height="wrap_content"
+                            android:text="Steps Taken"
+                            android:textAlignment="center" />
+
+                        <TextView
+                            android:id="@+id/stepsTaken"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textAlignment="center" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <LinearLayout
+                    android:id="@+id/recentActivitiesContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"></LinearLayout>
+
             </LinearLayout>
         </ScrollView>
 
@@ -501,6 +584,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:onClick="updateProfile"
                 android:text="Update Profile" />
 
             <TextView
@@ -787,6 +871,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:onClick="joinViaCode"
                 android:text="Join" />
         </LinearLayout>
 

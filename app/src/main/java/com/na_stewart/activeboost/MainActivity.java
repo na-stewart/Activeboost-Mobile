@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "profileNav":
                 componentManager.switchView("profile");
+                refreshProfile();
                 break;
         }
     }
@@ -205,6 +206,10 @@ public class MainActivity extends AppCompatActivity {
         parentLayout.addView(childLayout);
         parentLayout.addView(joinButton);
         return parentLayout;
+    }
+
+    public void joinViaCode(View view) {
+        onJoinGroup(((EditText) findViewById(R.id.inviteCode)).getText().toString());
     }
 
     private void onJoinGroup(String inviteCode) {
@@ -439,7 +444,117 @@ public class MainActivity extends AppCompatActivity {
 
     // PROFILE
 
+    private void fillProfile() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "security/account").build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject data = new JSONObject(response.body().string()).getJSONObject( "data");
+                    ((TextView) findViewById(R.id.username)).setText(data.getString("username"));
+                    ((TextView) findViewById(R.id.bio)).setText(data.getString("bio"));
+                }
+                else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
+    public void updateProfile(View view){
+        String username = ((TextView) findViewById(R.id.username)).getText().toString();
+        String bio = ((TextView) findViewById(R.id.bio)).getText().toString();
+        MultipartBody body = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("username", username)
+                .addFormDataPart("bio", bio)
+                .build();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Request request  = new Request.Builder().url(BASE_URL + "security/account").put(body).build();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> toast("Profile updated successfully!"));
+                }  else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+                runOnUiThread(() -> toast("An error occurred while editing the group."));
+            }
+        });
+    }
+
+    public void loadRecentActivities() {
+        String urlStr = BASE_URL + "fitbit/activity/list/weekly";
+        LinearLayout recentContainer = findViewById(R.id.recentActivitiesContainer);
+        recentContainer.removeAllViews();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
+                if (response.code() == 200)
+                {
+                    JSONObject json = new JSONObject(response.body().string());
+                    JSONArray data = json.getJSONObject("data").getJSONArray("activities");
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject item = data.getJSONObject(i);
+                        TextView textView = new TextView(this);
+                        textView.setPadding(0,0,0,20);
+                        textView.setText(String.format("%s - %s steps - %s calories - %s heart rate - %s mins",
+                                item.getString("activityName"), item.optInt("steps", 0),
+                                item.getInt("calories"),
+                                item.getInt("averageHeartRate"),
+                                item.getInt("duration") / 60000));
+                        textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        runOnUiThread(() -> recentContainer.addView(textView));
+                    }
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void loadTodaysStats(TextView view, String type) {
+        String urlStr = BASE_URL + String.format("fitbit/activity/weekly?type=%s", type);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
+                if (response.code() == 200)
+                {
+                    double total = 0;
+                    JSONArray data = new JSONObject(response.body().string()).getJSONObject("data").getJSONArray(String.format("activities-%s", type));
+                    for (int i = 0; i < data.length(); i++) {
+                        total += data.getJSONObject(i).getDouble("value");
+                    }
+                    view.setText(String.valueOf(Math.round(total)));
+                    if (Objects.equals(type, "distance"))
+                        view.setText(String.format("%s km", view.getText()));
+                }
+                else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void refreshProfile() {
+        loadTodaysStats(findViewById(R.id.stepsTaken), "steps");
+        loadTodaysStats(findViewById(R.id.caloriesBurned), "calories");
+        loadTodaysStats(findViewById(R.id.timeActive), "distance");
+        loadRecentActivities();
+        fillProfile();
+    }
 
     // GROUP INFO
 
@@ -608,9 +723,6 @@ public class MainActivity extends AppCompatActivity {
         linearLayout.addView(pointsTextView);
         return linearLayout;
     }
-
-
-
 
     // EDIT GROUP
 
@@ -799,8 +911,11 @@ public class MainActivity extends AppCompatActivity {
                         toast("Challenge processed successfully!");
                         ((Button) findViewById(R.id.challengeUpdate)).setText("Update");
                     });
-                } else
-                    toast(new JSONObject(response.body().string()).getString("message"));
+                } else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
                 runOnUiThread(() -> toast("An error occurred while editing the challenge."));
