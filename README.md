@@ -21,12 +21,25 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![Preview](https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview.PNG)
-![Preview](https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview2.PNG)
-![Preview](https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview3.PNG)
+Submission for CSCI_380, Introduction to Software Engineering.
 
+The goal of our app is to use competition to boost our audience’s motivation and increase their activity. This will allow them to be healthier and take better care of themselves.
 
-Utilizes the users’ competitive spirit to encourage them to be more active by fostering a supportive community that promotes active living.
+Utilizes the users’ competitive spirit by fostering a supportive community that promotes active living.
+
+### Demo
+
+[Watch the video.](https://www.youtube.com/watch?v=iu8YumIYoS8)
+
+[![Watch the video](https://img.youtube.com/vi/iu8YumIYoS8/0.jpg)](https://www.youtube.com/watch?v=iu8YumIYoS8)
+
+### Screenshots
+
+<div>
+  <img src="https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview2.PNG" alt="Image 2" width="250" height="550">
+  <img src="https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview.PNG" alt="Image 1" width="250" height="550">
+  <img src="https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview3.PNG" alt="Image 3" width="250" height="550">
+</div>
 
 <!-- GETTING STARTED -->
 ## Getting Started
