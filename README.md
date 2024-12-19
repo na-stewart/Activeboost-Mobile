@@ -6,6 +6,9 @@
   <p align="center">
     Get in shape, together.
   </p>
+  <p align="center">
+    Nicholas Stewart, Jenayah Shearn, Emma Degenhardt, Vidhee Patel, Ziru Xia
+  </p>
 </p>
 
 <!-- TABLE OF CONTENTS -->
