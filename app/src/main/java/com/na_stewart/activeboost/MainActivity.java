@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.nav).setVisibility(View.GONE);
     }
 
-    public void onNavigate(View view){
+    public void onNavigate(View view) {
         String navClicked = getResources().getResourceEntryName(view.getId());
         switch (navClicked) {
             case "homeNav":
@@ -141,17 +141,15 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group").build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         LinearLayout publicGroupView = getPublicGroupView(item);
-                        runOnUiThread(() ->  publicGroupsContainer.addView(publicGroupView));
+                        runOnUiThread(() -> publicGroupsContainer.addView(publicGroupView));
                     }
-                }
-                else {
+                } else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
                     runOnUiThread(() -> {
@@ -168,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout getPublicGroupView(JSONObject group) throws JSONException {
         LinearLayout parentLayout = new LinearLayout(getApplicationContext());
+        parentLayout.setPadding(0, 10, 0, 0);
         parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -241,6 +240,10 @@ public class MainActivity extends AppCompatActivity {
         ((EditText) findViewById(R.id.groupTitleField)).setText("");
         ((EditText) findViewById(R.id.groupDescription)).setText("");
         ((CheckBox) findViewById(R.id.groupPrivate)).setChecked(false);
+        LinearLayout groupChallenges = findViewById(R.id.groupEditableChallenges);
+        LinearLayout groupMembers = findViewById(R.id.groupMembers);
+        groupChallenges.removeAllViews();
+        groupMembers.removeAllViews();
     }
 
     private void fillMyGroups() {
@@ -249,17 +252,15 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/you").build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         LinearLayout publicGroupView = getMyGroupView(item);
-                        runOnUiThread(() ->  myGroupsContainer.addView(publicGroupView));
+                        runOnUiThread(() -> myGroupsContainer.addView(publicGroupView));
                     }
-                }
-                else {
+                } else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
                     runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
@@ -272,6 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout getMyGroupView(JSONObject group) throws JSONException {
         LinearLayout parentLayout = new LinearLayout(getApplicationContext());
+        parentLayout.setPadding(0, 10, 0, 0);
         parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
@@ -310,17 +312,15 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge/you").build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         LinearLayout myChallengeView = getChallengeView(item, "Redeem");
-                        runOnUiThread(() ->  myChallengesContainer.addView(myChallengeView));
+                        runOnUiThread(() -> myChallengesContainer.addView(myChallengeView));
                     }
-                }
-                else {
+                } else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
                     runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
@@ -333,6 +333,7 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout getChallengeView(JSONObject challenge, String buttonType) throws JSONException {
         LinearLayout linearLayout = new LinearLayout(getApplicationContext());
+        linearLayout.setPadding(0, 10, 0, 0);
         linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
@@ -359,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
-        fitnessPointsTextView.setText(String.format("Fitness Points: %s",  challenge.getString("reward")));
+        fitnessPointsTextView.setText(String.format("Fitness Points: %s", challenge.getString("reward")));
         linearLayout.addView(fitnessPointsTextView);
         TextView requiresTextView = new TextView(getApplicationContext());
         requiresTextView.setId(View.generateViewId());
@@ -369,7 +370,7 @@ public class MainActivity extends AppCompatActivity {
         ));
         String thresholdType = challenge.getString("threshold_type");
         requiresTextView.setText(String.format("Requires: %s %s", challenge.getString("completion_threshold"),
-                thresholdType.equals("distance") ? "km": thresholdType));
+                thresholdType.equals("distance") ? "km" : thresholdType));
         linearLayout.addView(requiresTextView);
         TextView expiresTextView = new TextView(getApplicationContext());
         expiresTextView.setLayoutParams(new LinearLayout.LayoutParams(
@@ -448,13 +449,11 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "security/account").build()).execute()) {
-                if (response.code() == 200)
-                {
-                    JSONObject data = new JSONObject(response.body().string()).getJSONObject( "data");
+                if (response.code() == 200) {
+                    JSONObject data = new JSONObject(response.body().string()).getJSONObject("data");
                     ((TextView) findViewById(R.id.username)).setText(data.getString("username"));
                     ((TextView) findViewById(R.id.bio)).setText(data.getString("bio"));
-                }
-                else {
+                } else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
                     runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
@@ -465,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void updateProfile(View view){
+    public void updateProfile(View view) {
         String username = ((TextView) findViewById(R.id.username)).getText().toString();
         String bio = ((TextView) findViewById(R.id.bio)).getText().toString();
         MultipartBody body = new MultipartBody.Builder()
@@ -474,12 +473,12 @@ public class MainActivity extends AppCompatActivity {
                 .addFormDataPart("bio", bio)
                 .build();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
-        Request request  = new Request.Builder().url(BASE_URL + "security/account").put(body).build();
+        Request request = new Request.Builder().url(BASE_URL + "security/account").put(body).build();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(request).execute()) {
                 if (response.isSuccessful()) {
                     runOnUiThread(() -> toast("Profile updated successfully!"));
-                }  else {
+                } else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
                     runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
@@ -498,14 +497,13 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
                     JSONArray data = json.getJSONObject("data").getJSONArray("activities");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         TextView textView = new TextView(this);
-                        textView.setPadding(0,0,0,20);
+                        textView.setPadding(0, 0, 0, 20);
                         textView.setText(String.format("%s - %s steps - %s calories - %s heart rate - %s mins",
                                 item.getString("activityName"), item.optInt("steps", 0),
                                 item.getInt("calories"),
@@ -526,8 +524,7 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(urlStr).build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     double total = 0;
                     JSONArray data = new JSONObject(response.body().string()).getJSONObject("data").getJSONArray(String.format("activities-%s", type));
                     for (int i = 0; i < data.length(); i++) {
@@ -536,8 +533,7 @@ public class MainActivity extends AppCompatActivity {
                     view.setText(String.valueOf(Math.round(total)));
                     if (Objects.equals(type, "distance"))
                         view.setText(String.format("%s km", view.getText()));
-                }
-                else {
+                } else {
                     String errorBody = response.body().string();
                     JSONObject errorJson = new JSONObject(errorBody);
                     runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
@@ -558,7 +554,7 @@ public class MainActivity extends AppCompatActivity {
 
     // GROUP INFO
 
-    private void openGroupInfo(JSONObject group)  {
+    private void openGroupInfo(JSONObject group) {
         componentManager.switchView("groupInfo");
         try {
             selectedGroup = group;
@@ -613,7 +609,7 @@ public class MainActivity extends AppCompatActivity {
                     new Request.Builder().url(BASE_URL + "group/leave?id=" + selectedGroup.getString("id")).put(RequestBody.create(new byte[0], null)).build()
             ).execute()) {
                 if (response.code() == 200) {
-                    runOnUiThread(() ->  {
+                    runOnUiThread(() -> {
                         toast("Group left successfully!");
                         componentManager.switchView("home");
                     });
@@ -632,19 +628,18 @@ public class MainActivity extends AppCompatActivity {
         groupChallenges.removeAllViews();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
-            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge/you").build()).execute()) {
-                if (response.code() == 200)
-                {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge?id="
+                    + selectedGroup.getString("id")).build()).execute()) {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         selectedChallenge = item;
                         LinearLayout myChallengeView = getChallengeView(item, "Join");
                         runOnUiThread(() -> groupChallenges.addView(myChallengeView));
                     }
-                }
-                else
+                } else
                     toast(new JSONObject(response.body().string()).getString("message"));
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -678,17 +673,15 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/leaderboard?id=" + selectedGroup.getString("id")).build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         LinearLayout leaderboardView = getLeaderboardView(item);
                         runOnUiThread(() -> groupLeaderboard.addView(leaderboardView));
                     }
-                }
-                else
+                } else
                     toast(new JSONObject(response.body().string()).getString("message"));
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -699,6 +692,7 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout getLeaderboardView(JSONObject member) throws JSONException {
         LinearLayout linearLayout = new LinearLayout(getApplicationContext());
+        linearLayout.setPadding(0, 10, 0, 0);
         linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
@@ -735,6 +729,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void deleteGroup(View view) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group?id="
+                    + selectedGroup.getString("id")).delete().build()).execute()) {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> {
+                        toast("Group deleted successfully!");
+                        componentManager.switchView("groupsAndChallenges");
+                        fillMyGroups();
+                    });
+                } else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     private void editGroup(String requestType) {
         String title = ((TextView) findViewById(R.id.groupTitleField)).getText().toString();
         String description = ((TextView) findViewById(R.id.groupDescription)).getText().toString();
@@ -757,8 +773,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }
-        }
-        else
+        } else
             request = new Request.Builder().url(BASE_URL + "group").post(body).build();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(request).execute()) {
@@ -772,7 +787,6 @@ public class MainActivity extends AppCompatActivity {
                     toast(new JSONObject(response.body().string()).getString("message"));
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> toast("An error occurred while editing the group."));
             }
         });
     }
@@ -784,17 +798,15 @@ public class MainActivity extends AppCompatActivity {
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL +
                     "group/challenge?group=" + selectedGroup.getString("id")).build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         LinearLayout myChallengeView = getChallengeView(item, "Edit");
                         runOnUiThread(() -> groupChallenges.addView(myChallengeView));
                     }
-                }
-                else
+                } else
                     toast(new JSONObject(response.body().string()).getString("message"));
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -808,17 +820,15 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/members?id=" + selectedGroup.getString("id")).build()).execute()) {
-                if (response.code() == 200)
-                {
+                if (response.code() == 200) {
                     JSONObject json = new JSONObject(response.body().string());
-                    JSONArray data = json.getJSONArray( "data");
+                    JSONArray data = json.getJSONArray("data");
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject item = data.getJSONObject(i);
                         LinearLayout myChallengeView = getMemberView(item);
                         runOnUiThread(() -> groupMembers.addView(myChallengeView));
                     }
-                }
-                else
+                } else
                     toast(new JSONObject(response.body().string()).getString("message"));
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -829,6 +839,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout getMemberView(JSONObject member) throws JSONException {
         // Create the parent LinearLayout
         LinearLayout linearLayout = new LinearLayout(getApplicationContext());
+        linearLayout.setPadding(0, 10, 0, 0);
         linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
@@ -853,11 +864,34 @@ public class MainActivity extends AppCompatActivity {
         kickButton.setLayoutParams(buttonParams);
         kickButton.setId(View.generateViewId());
         kickButton.setText("Kick");
+        String memberId = member.getString("id");
+        kickButton.setOnClickListener((View view) -> kickMember(memberId));
         kickButton.setTextSize(10); // Text size in sp
         linearLayout.addView(kickButton);
 
         // Return the constructed LinearLayout
         return linearLayout;
+    }
+
+    public void kickMember(String member) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/kick?id="
+                    + selectedGroup.getString("id") + "&account=" + member).put(RequestBody.create(new byte[0], null)).build()).execute()) {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> {
+                        toast("Member kicked successfully!");
+                        fillGroupMembers();;
+                    });
+                } else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     // EDIT CHALLENGE
@@ -871,7 +905,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-   private void onEditChallenge(String requestType) {
+    private void onEditChallenge(String requestType) {
         String title = ((TextView) findViewById(R.id.challengeTitle)).getText().toString();
         String description = ((TextView) findViewById(R.id.challengeDescription)).getText().toString();
         String challengeReward = ((TextView) findViewById(R.id.challengeReward)).getText().toString();
@@ -919,6 +953,28 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
                 runOnUiThread(() -> toast("An error occurred while editing the challenge."));
+            }
+        });
+    }
+
+    public void deleteChallenge(View view) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try (Response response = httpClient.newCall(new Request.Builder().url(BASE_URL + "group/challenge?id=" + selectedChallenge.getString("id")
+                    + "&group=" + selectedGroup.getString("id")).delete().build()).execute()) {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> {
+                        toast("Challenge deleted successfully!");
+                        componentManager.switchView("groupInfo");
+                        fillGroupChallenges();
+                    });
+                } else {
+                    String errorBody = response.body().string();
+                    JSONObject errorJson = new JSONObject(errorBody);
+                    runOnUiThread(() -> toast(errorJson.optString("message", "An unexpected error occurred.")));
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
             }
         });
     }

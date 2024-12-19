@@ -97,6 +97,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:onClick="deleteChallenge"
                 android:text="Delete" />
         </LinearLayout>
 
@@ -170,6 +171,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:onClick="deleteGroup"
                 android:text="Delete" />
         </LinearLayout>
 
@@ -180,7 +182,8 @@
         <LinearLayout
             android:layout_width="369dp"
             android:layout_height="353dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="visible">
 
             <ScrollView
                 android:layout_width="193dp"
@@ -203,30 +206,7 @@
                         android:id="@+id/groupMembers"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center|top"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="na-stewart"
-                                android:textAlignment="center"
-                                android:textSize="20dp" />
-
-                            <Button
-                                android:id="@+id/button15"
-                                android:layout_width="75dp"
-                                android:layout_height="32dp"
-                                android:text="Kick"
-                                android:textSize="10dp" />
-
-                        </LinearLayout>
-                    </LinearLayout>
+                        android:orientation="vertical" />
 
                 </LinearLayout>
             </ScrollView>
@@ -267,54 +247,8 @@
                         android:id="@+id/groupEditableChallenges"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:visibility="visible">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="9dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Marathon"
-                                android:textSize="20dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Can you travel the distance of a marathon this week?" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Fitness Points: 10" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Requires: 48 km" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Expires: 2024-12-20" />
-
-                            <Button
-                                android:id="@+id/joinChallenge"
-                                android:layout_width="74dp"
-                                android:layout_height="36dp"
-                                android:layout_weight="1"
-                                android:text="Edit"
-                                android:textSize="10dp" />
-
-                        </LinearLayout>
-                    </LinearLayout>
+                        android:orientation="vertical"
+                        android:visibility="visible" />
 
                 </LinearLayout>
             </ScrollView>
@@ -428,7 +362,7 @@
         android:layout_height="683dp"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -775,7 +709,7 @@
         android:gravity="center|top"
         android:orientation="vertical"
         android:padding="15dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/nav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -863,8 +797,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ems="10"
-                android:inputType="text"
-                android:text="Join Via Invite Code" />
+                android:hint="Join Via Invite Code"
+                android:inputType="text" />
 
             <Button
                 android:id="@+id/inviteJoin"
@@ -969,7 +903,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="34dp"
-                            android:text="Members"
+                            android:text="Leaderboard"
                             android:textAlignment="center"
                             android:textSize="15dp" />
 
