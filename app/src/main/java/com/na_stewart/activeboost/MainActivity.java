@@ -345,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
         titleTextView.setText(challenge.getString("title"));
-        titleTextView.setTextSize(20); // Text size in sp
+        titleTextView.setTextSize(20);
         linearLayout.addView(titleTextView);
         TextView descriptionTextView = new TextView(getApplicationContext());
         descriptionTextView.setLayoutParams(new LinearLayout.LayoutParams(
@@ -423,7 +423,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void redeemChallenge(String challengeId) {
         String url = BASE_URL + "group/challenge/redeem?id=" + challengeId;
-        // Execute the network request on a background thread
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(
@@ -647,17 +646,16 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     private void joinChallenge(String challengeId) {
-        // Execute the network request on a background thread
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.execute(() -> {
             try (Response response = httpClient.newCall(
-                    new Request.Builder().url(BASE_URL + "group/challenge/join?group=" + selectedGroup.getString("id") + "&id=" + challengeId).put(RequestBody.create(new byte[0], null)).build()
+                    new Request.Builder().url(BASE_URL + "group/challenge/join?group=" + selectedGroup.getString("id")
+                            + "&id=" + challengeId).put(RequestBody.create(new byte[0], null)).build()
             ).execute()) {
                 if (response.code() == 200) {
                     runOnUiThread(() -> toast("Challenge joined successfully!"));
-                    fillMyChallenges(); // Refresh challenges
+                    fillMyChallenges();
                 } else {
                     toast(new JSONObject(response.body().string()).getString("message"));
                 }
@@ -687,7 +685,6 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
-
     }
 
     private LinearLayout getLeaderboardView(JSONObject member) throws JSONException {
@@ -837,7 +834,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private LinearLayout getMemberView(JSONObject member) throws JSONException {
-        // Create the parent LinearLayout
         LinearLayout linearLayout = new LinearLayout(getApplicationContext());
         linearLayout.setPadding(0, 10, 0, 0);
         linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
@@ -846,8 +842,6 @@ public class MainActivity extends AppCompatActivity {
         ));
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setGravity(android.view.Gravity.CENTER | android.view.Gravity.TOP);
-
-        // Create TextView for "na-stewart"
         TextView nameTextView = new TextView(getApplicationContext());
         nameTextView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -855,10 +849,8 @@ public class MainActivity extends AppCompatActivity {
         ));
         nameTextView.setText(member.getString("username"));
         nameTextView.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
-        nameTextView.setTextSize(20); // Text size in sp
+        nameTextView.setTextSize(20);
         linearLayout.addView(nameTextView);
-
-        // Create Button for "Kick"
         Button kickButton = new Button(getApplicationContext());
         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(dpToPx(75), dpToPx(32));
         kickButton.setLayoutParams(buttonParams);
@@ -866,10 +858,8 @@ public class MainActivity extends AppCompatActivity {
         kickButton.setText("Kick");
         String memberId = member.getString("id");
         kickButton.setOnClickListener((View view) -> kickMember(memberId));
-        kickButton.setTextSize(10); // Text size in sp
+        kickButton.setTextSize(10);
         linearLayout.addView(kickButton);
-
-        // Return the constructed LinearLayout
         return linearLayout;
     }
 
@@ -979,9 +969,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     private void addValuesToChallengeThresholdSpinner() {
-        // Spinner is a dropdown.
         List<String> spinnerValues = new ArrayList<>();
         spinnerValues.add("steps");
         spinnerValues.add("distance");
@@ -997,7 +985,6 @@ public class MainActivity extends AppCompatActivity {
         Spinner thresholdSelector = findViewById(R.id.challengeThresholdType);
         thresholdSelector.setAdapter(adapter);
     }
-
 
     // MISC
 
