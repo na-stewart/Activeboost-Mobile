@@ -21,6 +21,11 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+![Preview](https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview.PNG)
+![Preview](https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview2.PNG)
+![Preview](https://github.com/na-stewart/Activeboost-Mobile/blob/master/preview3.PNG)
+
+
 Utilizes the users’ competitive spirit to encourage them to be more active by fostering a supportive community that promotes active living.
 
 <!-- GETTING STARTED -->
