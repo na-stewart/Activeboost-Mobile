@@ -30,6 +30,8 @@ Utilizes the users’ competitive spirit by fostering a supportive community tha
 
 ### Demo
 
+API Documentation: https://documenter.getpostman.com/view/26504282/2sAY55ZxRC
+
 [Watch the video.](https://www.youtube.com/watch?v=iu8YumIYoS8)
 
 [![Watch the video](https://img.youtube.com/vi/iu8YumIYoS8/0.jpg)](https://www.youtube.com/watch?v=iu8YumIYoS8)
